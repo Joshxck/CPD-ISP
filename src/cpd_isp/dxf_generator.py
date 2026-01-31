@@ -16,7 +16,8 @@ class DxfGenerator:
         self.gray = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
     
     def get_contours(self, min_area=5000):
-        blurred = cv2.GaussianBlur(self.gray, (81,81), 1)
+        blurred = cv2.medianBlur(self.gray, 5)
+        blurred = cv2.GaussianBlur(blurred, (81,81), 1)
 
         _, thresh = cv2.threshold(blurred,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 
@@ -31,6 +32,8 @@ class DxfGenerator:
             cv2.CHAIN_APPROX_NONE
         )
 
+        epsilon = 1.0  # adjust for precision
+
         outline = max(contours, key=cv2.contourArea)
         self.outline = cv2.approxPolyDP(outline, epsilon, True)
 
@@ -39,7 +42,7 @@ class DxfGenerator:
             if cv2.contourArea(c) > min_area
         ]
 
-        epsilon = 1.0  # adjust for precision
+        
 
         big_contours_sorted = sorted(big_contours, key=cv2.contourArea, reverse=True)
         self.big_contours = [cv2.approxPolyDP(c, epsilon, True) for c in big_contours_sorted]

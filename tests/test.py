@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from cpd_isp import CorrectedImage, ImageStitcher, 
+from cpd_isp import CorrectedImage, ImageStitcher, DxfGenerator
 
 def getPhoto(id):
     photos = ("IMG_1346.jpg",
@@ -31,3 +31,11 @@ for i in range(1, n + 1):
 cv2.imwrite("tests/output_images/Output.png", st.canvas)
 
 # cv2.imshow("Output Image", st.canvas)
+
+dxf = DxfGenerator(st.canvas, 450, 350)
+
+dxf.get_contours()
+
+dxf.plot_contours()
+
+cv2.imwrite("tests/output_images/Contours.png", dxf.img_contours)
