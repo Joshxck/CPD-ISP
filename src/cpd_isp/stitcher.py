@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from image_class import CorrectedImage
+from .image import CorrectedImage
 
 class ImageStitcher:
     def __init__(self, initial_image:CorrectedImage, margin=150.0, blend_width=50):
