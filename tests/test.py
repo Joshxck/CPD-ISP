@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from cpd_isp import CorrectedImage, ImageStitcher
+from cpd_isp import CorrectedImage, ImageStitcher, 
 
 def getPhoto(id):
     photos = ("IMG_1346.jpg",
