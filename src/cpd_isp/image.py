@@ -21,7 +21,7 @@ class CorrectedImage:
 
         p_tr = id_to_corner[0][0][0]  # top right
         p_tl = id_to_corner[1][0][0]  # top left
-        p_bl = id_to_corner[2][0][0]  # bottom left
+        p_bl = id_to_corner[2][0][2]  # bottom left CHANGE THIS BACK TO 0 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         p_br = id_to_corner[3][0][0]  # bottom rightd
 
         self.raw_pts = np.float32([p_tr, p_tl, p_bl, p_br])
