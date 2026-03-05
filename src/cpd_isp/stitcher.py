@@ -3,7 +3,7 @@ import numpy as np
 from .image import CorrectedImage
 
 class ImageStitcher:
-    def __init__(self, initial_image:CorrectedImage, margin=150.0, blend_width=50):
+    def __init__(self, initial_image:CorrectedImage, margin=150.0, blend_width=120):
         self.dx = None
         self.dy = None
         self.margin = margin
@@ -22,21 +22,42 @@ class ImageStitcher:
         h_curr, w_curr = self.images[-1].corrected_image.shape[:2]
         h_prev, w_prev = self.images[-2].corrected_image.shape[:2]
         h = min(h_curr, h_prev)
-        w = min(w_curr, w_prev)
+        w = min(w_curr, w_prev)//2
+        
         self.images[-1].process(w, h, False)
         self.images[-2].process(w, h, True)
-        self.estimate_translation(self.images[-1].processed_resized_image, self.images[-2].processed_resized_image)
-        self.canvas = np.pad(self.canvas, ((0, 0), (0, abs(int(self.dx))), (0, 0)), constant_values=0)
+        self.estimate_translation(self.images[-2], self.images[-1])
+
+        self.dx += w_curr/2.0
+
+        if self.dx < 0:
+            self.canvas = np.pad(self.canvas, ((0, 0), (0, abs(int(self.dx))), (0, 0)), constant_values=0)
+            self.gx -= self.dx
+            self.gy -= self.dy
+        else:
+            self.canvas = np.pad(self.canvas, ((0, 0), (abs(int(self.dx)), 0), (0, 0)), constant_values=0)
+            self.gy -= self.dy
+
+        print(f"dx: {self.dx}, dy: {self.dy}")
         
-        self.gx += int(self.dx)
-        self.gy += int(self.dy)
+        #self._place_image_subpixel_with_blend(self.images[-1].corrected_image, self.gx, self.gy)
         self._place_image_subpixel_with_blend(self.images[-1].corrected_image, self.gx, self.gy)
+
+        return self.dx, self.dy
     
     def estimate_translation(self, prev, curr):
-        (dx, dy), response = cv2.phaseCorrelate(
-            prev.astype(np.float32),
-            curr.astype(np.float32)
+     
+        (dx, dy), confidence = cv2.phaseCorrelate(
+            prev.processed_resized_image.astype(np.float32),
+            curr.processed_resized_image.astype(np.float32)
         )
+
+        if confidence < 0.1:  # Adjust threshold based on your data
+            print(f"Warning: Low confidence {confidence}, shift might be unreliable")
+        
+        if abs(dx) > curr.raw_width/2.0:
+            dx = curr.raw_width - abs(dx)
+        
         self.dx = dx
         self.dy = dy
     
@@ -51,8 +72,8 @@ class ImageStitcher:
         dy_subpixel = y - y_int
         
         # Translation matrix
-        M = np.float32([[1, 0, dx_subpixel],
-                        [0, 1, dy_subpixel]])
+        M = np.array([[1, 0, dx_subpixel],
+                        [0, 1, dy_subpixel]], dtype=np.float32)
         
         # Warp image with sub-pixel shift
         shifted_image = cv2.warpAffine(
@@ -68,10 +89,7 @@ class ImageStitcher:
         canvas_region = self.canvas[y_int:y_int+h, x_int:x_int+w].copy()
         
         # Create masks for blending
-        # Mask for existing canvas content (1 where there's content)
         canvas_mask = (np.sum(canvas_region, axis=2) > 0).astype(np.float32)
-        
-        # Mask for new image (1 where there's content)
         image_mask = (np.sum(shifted_image, axis=2) > 0).astype(np.float32)
         
         # Find overlap region
@@ -81,11 +99,19 @@ class ImageStitcher:
         alpha_new = np.ones_like(image_mask)
         
         if np.any(overlap_mask > 0):
-            # Find the left edge of the overlap region for each row
             overlap_indices = np.where(overlap_mask > 0)
             
             if len(overlap_indices[0]) > 0:
-                # For horizontal blending (assuming images are stitched left to right)
+                # Determine blend direction by checking WHERE in the image the overlap occurs
+                # Find the horizontal center of the overlap
+                overlap_cols = overlap_indices[1]
+                overlap_center_col = np.mean(overlap_cols)
+                image_center_col = w / 2.0
+                
+                # If overlap is on the LEFT side of the new image → new image is on the RIGHT
+                # If overlap is on the RIGHT side of the new image → new image is on the LEFT
+                blend_left_to_right = overlap_center_col < image_center_col
+                
                 for row in range(h):
                     cols_in_overlap = overlap_indices[1][overlap_indices[0] == row]
                     if len(cols_in_overlap) > 0:
@@ -93,13 +119,16 @@ class ImageStitcher:
                         right_edge = cols_in_overlap.max()
                         overlap_width = right_edge - left_edge + 1
                         
-                        # Use the specified blend width or the overlap width, whichever is smaller
                         actual_blend_width = min(self.blend_width, overlap_width)
                         
-                        # Create gradient from 0 (left) to 1 (right) over the blend width
-                        for col in range(left_edge, min(left_edge + actual_blend_width, right_edge + 1)):
-                            # Linear gradient
-                            alpha_new[row, col] = (col - left_edge) / actual_blend_width
+                        if blend_left_to_right:
+                            # Overlap on left side of new image → blend from old to new (left to right)
+                            for col in range(left_edge, min(left_edge + actual_blend_width, right_edge + 1)):
+                                alpha_new[row, col] = (col - left_edge) / actual_blend_width
+                        else:
+                            # Overlap on right side of new image → blend from new to old (right to left)
+                            for col in range(max(right_edge - actual_blend_width + 1, left_edge), right_edge + 1):
+                                alpha_new[row, col] = (right_edge - col) / actual_blend_width
         
         # Expand alpha to 3 channels
         alpha_new_3ch = np.stack([alpha_new] * 3, axis=2)
@@ -146,10 +175,6 @@ class ImageStitcher:
         )
         
         self.canvas[y_int:y_int+h, x_int:x_int+w] = shifted_image
-
-
-
-
 
 
 

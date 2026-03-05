@@ -40,9 +40,9 @@ cv2.imwrite("tests/output_images/Output.png", st.canvas)
 
 # cv2.imshow("Output Image", st.canvas)
 
-dxf = DxfGenerator(st.canvas, 450, 350)
+dxf = DxfGenerator(st.canvas, 100, 200)
 
-dxf.get_contours()
+dxf.get_contours(4000)
 
 dxf.plot_contours()
 
