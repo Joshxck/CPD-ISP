@@ -25,7 +25,7 @@ class CorrectedImage:
         # Sort markers and extract points
         p_tr = id_to_corner[0][0][0]  # top right
         p_tl = id_to_corner[1][0][0]  # top left
-        p_bl = id_to_corner[2][0][2]  # bottom left
+        p_bl = id_to_corner[2][0][0]  # bottom left
         p_br = id_to_corner[3][0][0]  # bottom rightd
 
         self.raw_pts = np.array([p_tr, p_tl, p_bl, p_br], dtype=np.float32) # List of points
@@ -60,7 +60,7 @@ class CorrectedImage:
     def perspectiveWarpResizeRaw(self):
         self.perspectiveWarpResize(self.raw_width, self.raw_height)
 
-    def phaseCorrelationPreProcess(self, is_old, threshold=140):
+    def phaseCorrelationPreProcess(self, is_old, threshold=100):
         overlap_w = self.corrected_width // 2 # get aproximate width
 
         gray = cv2.cvtColor(self.corrected_image, cv2.COLOR_RGB2GRAY) # Convert to grayscale
@@ -77,14 +77,14 @@ class CorrectedImage:
 
         # Image processing
         # High Pass Filter
-        thresh = self.high_pass(thresh)
+        #thresh = self.high_pass(thresh)
 
         # CLAHE (Adaptive Histogram Equalization)
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         thresh = clahe.apply(thresh.astype(np.uint16))
         
         # Normalize Image
-        thresh = self.normalize(thresh)
+        #thresh = self.normalize(thresh)
 
         # Apply Hann Window
         thresh = self.apply_horizontal_window(thresh)
@@ -97,7 +97,7 @@ class CorrectedImage:
 
         self.processed_resized_image = self.processed_image[0:target_height, 0:target_width]
 
-    def process(self, target_width, target_height, is_old, threshold=110):
+    def process(self, target_width, target_height, is_old, threshold=140):
         self.phaseCorrelationPreProcess(is_old, threshold)
         self.resizeImage(target_width, target_height)
 
