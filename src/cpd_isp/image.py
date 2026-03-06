@@ -84,7 +84,7 @@ class CorrectedImage:
         thresh = clahe.apply(thresh.astype(np.uint16))
         
         # Normalize Image
-        #thresh = self.normalize(thresh)
+        thresh = self.normalize(thresh)
 
         # Apply Hann Window
         thresh = self.apply_horizontal_window(thresh)
@@ -97,7 +97,7 @@ class CorrectedImage:
 
         self.processed_resized_image = self.processed_image[0:target_height, 0:target_width]
 
-    def process(self, target_width, target_height, is_old, threshold=140):
+    def process(self, target_width, target_height, is_old, threshold=100):
         self.phaseCorrelationPreProcess(is_old, threshold)
         self.resizeImage(target_width, target_height)
 
