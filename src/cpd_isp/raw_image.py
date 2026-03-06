@@ -46,6 +46,63 @@ class ImagePair:
 
         return mask
 
+    def phaseCorrelationPreProcess(self, is_old, threshold=150):
+        overlap_w = self.width // 2 # get aproximate width
+
+        gray = cv2.cvtColor(self.image, cv2.COLOR_RGB2GRAY) # Convert to grayscale
+        
+        # Select ROI
+        if not is_old:
+            roi = gray[:, -overlap_w:]
+        else:
+            roi = gray[:, :overlap_w]
+
+        # Apply Threshold to reject background
+        edge_mask = roi > threshold
+        thresh = roi * edge_mask
+
+        # Image processing
+        # High Pass Filter
+        #thresh = self.high_pass(thresh)
+
+        # CLAHE (Adaptive Histogram Equalization)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        thresh = clahe.apply(thresh.astype(np.uint8))
+        #thresh = (thresh / 65535).astype(np.float32)
+        
+        # Normalize Image
+        #thresh = self.normalize(thresh)
+
+        # Apply Hann Window
+        thresh = self.apply_horizontal_window(thresh)
+
+        self.processed_image = thresh
+    
+    def tukey_1d(self, n, alpha=0.4):
+        x = np.linspace(0, 1, n)
+        w = np.ones(n)
+    
+        first = alpha / 2
+        last = 1 - alpha / 2
+    
+        # left taper
+        mask = x < first
+        w[mask] = 0.5 * (1 + np.cos(np.pi * ((2*x[mask]/alpha) - 1)))
+    
+        # right taper
+        mask = x > last
+        w[mask] = 0.5 * (1 + np.cos(np.pi * ((2*x[mask]/alpha) - (2/alpha) + 1)))
+    
+        return w
+
+    def apply_horizontal_window(self, patch, alpha=0.4):
+        h, w = patch.shape
+        win_x = self.tukey_1d(w, alpha)
+    
+        # broadcast vertically (no y windowing)
+        window = np.tile(win_x, (h, 1))
+    
+        return patch * window
 
  
 class RawImage:
