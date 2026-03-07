@@ -63,7 +63,7 @@ class ImagePair:
 
         # Image processing
         # High Pass Filter
-        #thresh = self.high_pass(thresh)
+        # thresh = self.high_pass(thresh)
 
         # CLAHE (Adaptive Histogram Equalization)
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
@@ -77,6 +77,16 @@ class ImagePair:
         thresh = self.apply_horizontal_window(thresh)
 
         self.processed_image = thresh
+    
+    def resizeImage(self, target_width, target_height):
+        if target_height > self.height or target_width > self.width:
+            raise ValueError("Target size must be <= original size")
+
+        self.processed_resized_image = self.processed_image[0:target_height, 0:target_width]
+    
+    def process(self, target_width, target_height, is_old, threshold=110):
+        self.phaseCorrelationPreProcess(is_old, threshold)
+        self.resizeImage(target_width, target_height)
     
     def tukey_1d(self, n, alpha=0.4):
         x = np.linspace(0, 1, n)

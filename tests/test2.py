@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from cpd_isp import CorrectedImage, ImageStitcher, DxfGenerator
+from cpd_isp import CorrectedImage, ImageStitcher, DxfGenerator, ImagePair
 import matplotlib.pyplot as plt
 from skimage.exposure import match_histograms
 
