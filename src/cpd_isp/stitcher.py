@@ -45,7 +45,7 @@ class ImageStitcher:
 
         print(f"dx: {self.dx}, dy: {self.dy}")
         
-        self._place_image_subpixel_with_blend(self.images[-1].image, self.gx, self.gy)
+        self._place_image_subpixel(self.images[-1].image, self.gx, self.gy)
 
         return self.dx, self.dy
     

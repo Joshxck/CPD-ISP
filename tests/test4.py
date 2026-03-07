@@ -40,6 +40,15 @@ for i in range(1, n + 1):
     st.add_image(getImageObj(i))
 
 cv2.imwrite("tests/output_images/Output.png", st.canvas)
+
+dxf = DxfGenerator(st.canvas, 330, 200)
+
+dxf.get_contours(4000)
+
+dxf.plot_contours()
+
+cv2.imwrite("tests/output_images/Contours.png", dxf.img_contours)
+
 # plt.tight_layout()
 # plt.show()
 
