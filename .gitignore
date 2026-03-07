@@ -219,5 +219,8 @@ tests/input_images_3/*
 tests/input_images_4/*
 !tests/input_images_4/.gitkeep
 
+tests/input_images_5/*
+!tests/input_images_5/.gitkeep
+
 tests/output_images/*
 !tests/output_images/.gitkeep
