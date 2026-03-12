@@ -41,13 +41,16 @@ for i in range(1, n + 1):
 
 cv2.imwrite("tests/output_images/Output.png", st.canvas)
 
-dxf = DxfGenerator(st.canvas, 330, 200)
+#dxf = DxfGenerator(st.canvas, 330, 200)
+dxf = DxfGenerator(st.canvas, 0, 0)
 
-dxf.get_contours(4000)
+dxf.get_contours(2000)
 
 dxf.plot_contours()
 
 cv2.imwrite("tests/output_images/Contours.png", dxf.img_contours)
+
+dxf.contours_to_merged_dxf("tests/output_images/ouput.dxf")
 
 # plt.tight_layout()
 # plt.show()
