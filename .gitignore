@@ -210,5 +210,17 @@ __marimo__/
 tests/input_images/*
 !tests/input_images/.gitkeep
 
+tests/input_images_2/*
+!tests/input_images_2/.gitkeep
+
+tests/input_images_3/*
+!tests/input_images_3/.gitkeep
+
+tests/input_images_4/*
+!tests/input_images_4/.gitkeep
+
+tests/input_images_5/*
+!tests/input_images_5/.gitkeep
+
 tests/output_images/*
 !tests/output_images/.gitkeep

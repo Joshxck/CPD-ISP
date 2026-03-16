@@ -3,11 +3,14 @@
 from .image import CorrectedImage
 from .stitcher import ImageStitcher
 from .dxf_generator import DxfGenerator
+from .raw_image import RawImage, ImagePair
 
 __version__ = "0.1.0"
 
 __all__ = [
     "CorrectedImage",
     "ImageStitcher",
-    "DxfGenerator"
+    "DxfGenerator",
+    "RawImage",
+    "ImagePair"
 ]

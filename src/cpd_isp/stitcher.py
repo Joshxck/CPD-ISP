@@ -1,34 +1,39 @@
 import cv2
 import numpy as np
-from .image import CorrectedImage
+from .raw_image import ImagePair
 
 class ImageStitcher:
-    def __init__(self, initial_image:CorrectedImage, margin=150.0, blend_width=120):
+    def __init__(self, initial_image:ImagePair, margin=150.0, blend_width=120):
         self.dx = None
         self.dy = None
         self.margin = margin
         self.blend_width = blend_width  # Width of the blending region in pixels
-        h, w = initial_image.corrected_image.shape[:2]
+
+        h = initial_image.height
+        w = initial_image.width
+
         self.canvas = np.zeros((h + 2 * int(self.margin), 
                                 w + 2 * int(self.margin), 3), dtype=np.uint8)
         # Initial global zero
         self.gx = self.margin
         self.gy = self.margin
-        self.canvas[int(self.gy):int(self.gy)+h, int(self.gx):int(self.gx)+w] = initial_image.corrected_image
+        self.canvas[int(self.gy):int(self.gy)+h, int(self.gx):int(self.gx)+w] = initial_image.image
         self.images = [initial_image]
     
-    def add_image(self, image):
+    def add_image(self, image:ImagePair):
         self.images.append(image)
-        h_curr, w_curr = self.images[-1].corrected_image.shape[:2]
-        h_prev, w_prev = self.images[-2].corrected_image.shape[:2]
+
+        h_curr, w_curr = self.images[-1].image.shape[:2]
+        h_prev, w_prev = self.images[-2].image.shape[:2]
+
         h = min(h_curr, h_prev)
         w = min(w_curr, w_prev)//2
         
-        self.images[-1].process(w, h, False)
-        self.images[-2].process(w, h, True)
+        self.images[-1].process(w, h, True) # Flip these based on the direction feeding in
+        self.images[-2].process(w, h, False)
         self.estimate_translation(self.images[-2], self.images[-1])
 
-        self.dx += w_curr/2.0
+        self.dx -= w_curr/2.0 # Also flip this
 
         if self.dx < 0:
             self.canvas = np.pad(self.canvas, ((0, 0), (0, abs(int(self.dx))), (0, 0)), constant_values=0)
@@ -40,8 +45,7 @@ class ImageStitcher:
 
         print(f"dx: {self.dx}, dy: {self.dy}")
         
-        #self._place_image_subpixel_with_blend(self.images[-1].corrected_image, self.gx, self.gy)
-        self._place_image_subpixel_with_blend(self.images[-1].corrected_image, self.gx, self.gy)
+        self._place_image_subpixel(self.images[-1].image, self.gx, self.gy)
 
         return self.dx, self.dy
     
@@ -54,9 +58,14 @@ class ImageStitcher:
 
         if confidence < 0.1:  # Adjust threshold based on your data
             print(f"Warning: Low confidence {confidence}, shift might be unreliable")
+        else:
+            print(f"Confidence: {confidence}")
         
-        if abs(dx) > curr.raw_width/2.0:
-            dx = curr.raw_width - abs(dx)
+        if abs(dx) > curr.width/2.0:
+            dx = curr.width - abs(dx)
+        
+        if abs(dy) > curr.height/2.0:
+            dy = curr.height - abs(dy)
         
         self.dx = dx
         self.dy = dy
