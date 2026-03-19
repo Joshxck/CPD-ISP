@@ -169,6 +169,35 @@ def capture(cfg: dict) -> str:
     return str(out_path)
 
 
+def capture_image(
+    device=None,
+    frames=None,
+    width=None,
+    height=None,
+    exposure=None,
+    output_dir=None,
+    calibration=None,
+    post_sharpen=True,
+):
+    """
+    Capture a high-quality image from the webcam.
+    All parameters fall back to DEFAULTS if not provided.
+    Returns the path to the saved image.
+    """
+    cfg = {
+        "device":      device      if device      is not None else DEFAULTS["device"],
+        "frames":      frames      if frames      is not None else DEFAULTS["frames"],
+        "width":       width       if width       is not None else DEFAULTS["width"],
+        "height":      height      if height      is not None else DEFAULTS["height"],
+        "exposure":    exposure    if exposure    is not None else DEFAULTS["exposure"],
+        "output_dir":  output_dir  if output_dir  is not None else DEFAULTS["output_dir"],
+        "calibration": calibration if calibration is not None else DEFAULTS["calibration"],
+        "post_sharpen": post_sharpen,
+    }
+    os.makedirs(cfg["output_dir"], exist_ok=True)
+    return capture(cfg)  # make sure capture() returns the saved path
+
+
 def main():
     p = argparse.ArgumentParser(description="CNC webcam high-quality capture")
     p.add_argument("--device",      type=int,   default=DEFAULTS["device"])
