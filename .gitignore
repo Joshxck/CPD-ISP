@@ -206,6 +206,7 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
+
 # Test images - ignore all images but keep the folders
 tests/input_images/*
 !tests/input_images/.gitkeep
@@ -222,5 +223,26 @@ tests/input_images_4/*
 tests/input_images_5/*
 !tests/input_images_5/.gitkeep
 
+tests/output_images_2/*
+!tests/output_images_2/.gitkeep
+
+tests/output_images_3/*
+!tests/output_images_3/.gitkeep
+
+tests/output_images_4/*
+!tests/output_images_4/.gitkeep
+
 tests/output_images/*
 !tests/output_images/.gitkeep
+
+tests/output_images_5/*
+!tests/output_images_5/.gitkeep
+
+tests/output_images_6/*
+!tests/output_images_6/.gitkeep
+
+tests/output_images_7/*
+!tests/output_images_7/.gitkeep
+
+tests/input_images_7/*
+!tests/input_images_7/.gitkeep

@@ -3,7 +3,7 @@ import numpy as np
 from .raw_image import ImagePair
 
 class ImageStitcher:
-    def __init__(self, initial_image:ImagePair, margin=150.0, blend_width=120):
+    def __init__(self, initial_image:ImagePair, margin=150.0, blend_width=10):
         self.dx = None
         self.dy = None
         self.margin = margin
@@ -29,11 +29,11 @@ class ImageStitcher:
         h = min(h_curr, h_prev)
         w = min(w_curr, w_prev)//2
         
-        self.images[-1].process(w, h, True) # Flip these based on the direction feeding in
-        self.images[-2].process(w, h, False)
+        self.images[-1].process(w, h, False) # Flip these based on the direction feeding in
+        self.images[-2].process(w, h, True)
         self.estimate_translation(self.images[-2], self.images[-1])
 
-        self.dx -= w_curr/2.0 # Also flip this
+        self.dx += w_curr/2.0 # Also flip this
 
         if self.dx < 0:
             self.canvas = np.pad(self.canvas, ((0, 0), (0, abs(int(self.dx))), (0, 0)), constant_values=0)
@@ -45,7 +45,7 @@ class ImageStitcher:
 
         print(f"dx: {self.dx}, dy: {self.dy}")
         
-        self._place_image_subpixel(self.images[-1].image, self.gx, self.gy)
+        self._place_image_subpixel_with_blend(self.images[-1].image, self.gx, self.gy)
 
         return self.dx, self.dy
     

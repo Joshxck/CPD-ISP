@@ -16,7 +16,7 @@ class ImagePair:
 
         self.blend_images()
 
-    def blend_images(self, blend_start=0.3, blend_end=0.7):
+    def blend_images(self, blend_start=0.49, blend_end=0.51):
         mask = self.create_gradient_mask(blend_start, blend_end)
 
         # Expand mask to 3 channels to work with colour images
@@ -28,7 +28,7 @@ class ImagePair:
 
         self.image = (img_a_f * mask_3ch) + (img_b_f * (1.0 - mask_3ch))
 
-    def create_gradient_mask(self, blend_start=0.3, blend_end=0.7):
+    def create_gradient_mask(self, blend_start, blend_end):
         mask = np.zeros((self.height, self.width), dtype=np.float32)
 
         start_px = int(self.height * blend_start)
@@ -46,7 +46,7 @@ class ImagePair:
 
         return mask
 
-    def phaseCorrelationPreProcess(self, is_old, threshold=150):
+    def phaseCorrelationPreProcess(self, is_old, threshold=30):
         overlap_w = self.width // 2 # get aproximate width
 
         gray = cv2.cvtColor(self.image, cv2.COLOR_RGB2GRAY) # Convert to grayscale
@@ -84,7 +84,7 @@ class ImagePair:
 
         self.processed_resized_image = self.processed_image[0:target_height, 0:target_width]
     
-    def process(self, target_width, target_height, is_old, threshold=110):
+    def process(self, target_width, target_height, is_old, threshold=30):
         self.phaseCorrelationPreProcess(is_old, threshold)
         self.resizeImage(target_width, target_height)
     
@@ -136,10 +136,10 @@ class RawImage:
             raise RequiredMarkersMissingError(id_to_corner.keys())
 
         # Sort markers and extract points
-        p_tr = id_to_corner[0][0][0]  # top right
-        p_tl = id_to_corner[1][0][0]  # top left
-        p_bl = id_to_corner[2][0][0]  # bottom left
-        p_br = id_to_corner[3][0][0]  # bottom rightd
+        p_tr = id_to_corner[1][0][0]  # top right
+        p_tl = id_to_corner[2][0][0]  # top left
+        p_bl = id_to_corner[3][0][0]  # bottom left
+        p_br = id_to_corner[0][0][0]  # bottom rightd
 
         # Calculate Dimensions
         self.raw_pts = np.array([p_tr, p_tl, p_bl, p_br], dtype=np.float32) # List of points
