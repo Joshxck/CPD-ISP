@@ -1,4 +1,4 @@
-"""Basic scanning logic for IGEN 430"""
+"""Basic evaluation scanning logic for IGEN 430"""
 
 from .sender import send_gcode, wait_for_idle
 
