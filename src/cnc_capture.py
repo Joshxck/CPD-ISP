@@ -11,6 +11,7 @@ import argparse
 import time
 import os
 from pathlib import Path
+import sys
 
 
 # ─── Defaults ─────────────────────────────────────────────────────────────────
@@ -77,7 +78,7 @@ def run_calibration(device: int, width: int, height: int,
     Generate one at: https://calib.io/pages/camera-calibration-pattern-generator
     Hold it at different angles/distances. SPACE = capture, Q = finish.
     """
-    cap = cv2.VideoCapture(device, cv2.CAP_DSHOW)
+    cap = open_camera(device)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH,  width)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
@@ -129,6 +130,11 @@ def run_calibration(device: int, width: int, height: int,
     np.savez(output, camera_matrix=mtx, dist_coeffs=dist)
     print(f"done. Saved to {output}")
 
+def open_camera(device):
+    if sys.platform.startswith("win"):
+        return cv2.VideoCapture(device, cv2.CAP_DSHOW)
+    else:
+        return cv2.VideoCapture(device, cv2.CAP_V4L2)
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
@@ -136,7 +142,7 @@ def capture(cfg: dict) -> str:
     # Open fresh, set exposure only — don't touch other settings.
     # This camera ignores AUTO_EXPOSURE and has its own AE logic;
     # too many warmup frames lets it override our exposure setting.
-    cap = cv2.VideoCapture(cfg["device"], cv2.CAP_DSHOW)
+    cap = open_camera(cfg["device"])
     if not cap.isOpened():
         raise RuntimeError(f"Could not open camera device {cfg['device']}")
     cap.set(cv2.CAP_PROP_FRAME_WIDTH,  cfg["width"])

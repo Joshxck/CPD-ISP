@@ -1,57 +1,88 @@
 import serial
 import time
+import os
+import serial.tools.list_ports
 
-PORT = 'COM3'
 BAUD = 115200
+
+def find_port():
+    env_port = os.getenv("CNC_PORT")
+    if env_port:
+        return env_port
+
+    for p in serial.tools.list_ports.comports():
+        if "Teensy" in p.description or "USB" in p.description:
+            return p.device
+
+    raise RuntimeError("No CNC device found")
+
+
+def read_response(ser):
+    while True:
+        line = ser.readline().decode(errors='ignore').strip()
+        if not line:
+            continue
+
+        print(f'<< {line}')
+
+        if line.lower().startswith('ok') or 'error' in line.lower():
+            return line
+
 
 def send_gcode(ser, line):
     line = line.strip()
     if not line or line.startswith(';'):
-        return None  # skip empty lines and comments
-    
+        return None
+
     print(f'>> {line}')
     ser.write((line + '\n').encode())
-    
-    # Wait for response
-    response = ser.readline().decode().strip()
-    print(f'<< {response}')
-    return response
+    return read_response(ser)
 
-def wait_for_idle(ser, poll_interval=0.5):
-    """Poll status until machine is Idle."""
+
+def wait_for_idle(ser, poll_interval=0.2):
     while True:
-        ser.write(b'?')
-        status = ser.readline().decode().strip()
-        print(f'   status: {status}')
-        if 'Idle' in status:
-            break
+        ser.write(b'?\n')
+        line = ser.readline().decode(errors='ignore').strip()
+
+        if line:
+            print(f'   status: {line}')
+            if line.startswith('<') and 'Idle' in line:
+                break
+
         time.sleep(poll_interval)
+
+
+def read_startup(ser, timeout=2):
+    start = time.time()
+    while time.time() - start < timeout:
+        line = ser.readline().decode(errors='ignore').strip()
+        if line:
+            print(f'Startup: {line}')
+
 
 def run_file(ser, filepath):
     with open(filepath, 'r') as f:
-        lines = f.readlines()
-    
-    for line in lines:
-        response = send_gcode(ser, line)
-        if response and 'error' in response.lower():
-            print(f'[ERROR] Halting. grbl said: {response}')
-            break
+        for line in f:
+            response = send_gcode(ser, line)
+            if response and 'error' in response.lower():
+                print(f'[ERROR] Halting: {response}')
+                break
+
 
 def main():
-    with serial.Serial(PORT, BAUD, timeout=5) as ser:
-        time.sleep(2)  # Wait for grbl to initialize
-        ser.flushInput()
-        
-        # grblHAL sends a startup message — read and print it
-        startup = ser.read(ser.in_waiting).decode(errors='ignore')
-        print(f'Startup: {startup}')
-        
-        # Send a file
+    port = find_port()
+
+    with serial.Serial(port, BAUD, timeout=1) as ser:
+        time.sleep(2)
+
+        ser.reset_input_buffer()
+        read_startup(ser)
+
         run_file(ser, 'my_program.gcode')
-        
-        # Wait until motion is done before closing
         wait_for_idle(ser)
+
         print('Done.')
+
 
 if __name__ == '__main__':
     main()
